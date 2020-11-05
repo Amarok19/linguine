@@ -1,7 +1,37 @@
+import os
 import json
+import locale
 import argparse
 import constants
 import mimetypes
+
+locale_list = [f(loc) for loc in locale.windows_locale.items() for f in (
+    lambda x: x[1],
+    lambda x: x[1].split("_")[0]
+)]
+locale_list = list(set(locale_list))
+locale_list.sort()
+
+
+class dict(dict):
+    name = ''
+
+    @classmethod
+    def class_override(cls, consumed_dict):
+        for key in consumed_dict:
+            if isinstance(consumed_dict[key], __builtins__.dict):
+                consumed_dict[key] = dict.class_override(consumed_dict[key])
+        return dict(consumed_dict)
+
+    def add_name(self, dict_file):
+        for locale_name in locale_list:
+            dict_file_name = os.path.basename(dict_file.name)
+            stripped_dict_file_name, _ = os.path.splitext(dict_file_name)
+            if locale_name == stripped_dict_file_name:
+                self.name = locale_name
+                return
+        else:
+            raise KeyError(f"Cannot match the name of file {dict_file_name} to any known locale name.")
 
 
 def get_dict_depth(dictionary):
@@ -10,24 +40,42 @@ def get_dict_depth(dictionary):
     return 0
 
 
-def parse_args():
-    parser = argparse.ArgumentParser(constants.help_text)
-    parser.add_argument('in_files', type=str, nargs='+', help='A list of files accepted as input.')
-    return parser.parse_args()
-
-
-def spreadsheet_to_json():
-    dicts = [json.load(file) for file in in_files]
-    depth = max(list(map(get_dict_depth(), dicts)))
-    print("Placeholder for spreadsheet_to_json")
+def merge_dicts(target_dict, source_dict):
+    for item in source_dict.items():
+        if not isinstance(item[1], dict):
+            target_dict[item[0]] = dict()
+            target_dict[item[0]][source_dict.name] = item[1]
+        else:
+            item[1].name = source_dict.name
+            if item[0] not in target_dict:
+                target_dict[item[0]] = dict()
+            merge_dicts(target_dict[item[0]], item[1])
 
 
 def json_to_spreadsheet():
+    dicts = []
+    for file in in_files:
+        current_dict = json.load(file)
+        current_dict = dict.class_override(current_dict)
+        current_dict.add_name(file)
+        dicts.append(current_dict)
+    depth = max(list(map(get_dict_depth, dicts)))
+    merged_dict = dict()
+    for source_dict in dicts:
+        merge_dicts(merged_dict, source_dict)
+    print(f"Max depth = {depth}")  # DEBUG
+    print(merged_dict)  # DEBUG
 
-    print("Placeholder for json_to_spreadsheet")
+
+def spreadsheet_to_json():
+
+    print("Placeholder for spreadsheet_to_json")
 
 
-args = parse_args()
+parser = argparse.ArgumentParser(constants.help_text)
+parser.add_argument('in_files', type=str, nargs='+', help='A list of files accepted as input.')
+args = parser.parse_args()
+
 in_files = []
 for file in args.in_files:
     in_files.append(open(file, 'r'))
