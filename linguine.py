@@ -43,7 +43,8 @@ def get_dict_depth(dictionary):
 def merge_dicts(target_dict, source_dict):
     for item in source_dict.items():
         if not isinstance(item[1], dict):
-            target_dict[item[0]] = dict()
+            if not item[0] in target_dict:
+                target_dict[item[0]] = dict()
             target_dict[item[0]][source_dict.name] = item[1]
         else:
             item[1].name = source_dict.name
@@ -64,7 +65,7 @@ def json_to_spreadsheet():
     for source_dict in dicts:
         merge_dicts(merged_dict, source_dict)
     print(f"Max depth = {depth}")  # DEBUG
-    print(merged_dict)  # DEBUG
+    json.dump(merged_dict, open("merged_dict.json", 'w'), indent=4)  # DEBUG
 
 
 def spreadsheet_to_json():
