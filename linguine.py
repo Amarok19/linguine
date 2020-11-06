@@ -34,26 +34,6 @@ class dict(dict):
             raise KeyError(f"Cannot match the name of file {dict_file_name} to any known locale name.")
 
 
-def to_col_id(col_number):
-    """
-    Column numbering starts from 1 because a dict of depth 1 should result in 1-column-thick key section in
-    the final spreadsheet.
-
-    The assumption is there will not be more than 24 columns.
-    """
-    return chr(col_number + ord('A') + 1)
-
-
-def to_col_nb(col_id):
-    """
-    Column numbering starts from 1 because a dict of depth 1 should result in 1-column-thick key section in
-    the final spreadsheet.
-
-    The assumption is there will not be more than 24 columns.
-    """
-    return ord(col_id.upper()) - ord('@')
-
-
 def get_dict_depth(dictionary):
     if isinstance(dictionary, dict):
         return (max(map(get_dict_depth, dictionary.values())) if dictionary else 0) + 1
